@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>.
+
+    <script type="text/javascript">
+        function showNationwideStats() {
+            // https://covidtracking.com/data/api
+            // http://hayageek.com/jquery-ajax-post/
+            $.ajax({ '/snapshot'
+                url: 'https://api.covidtracking.com/v1/us/current.json',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log(data);
+                    data = data[0];
+
+                    var chartData = {
+                        labels: ['Deaths'],
+                        datasets: [{
+                            label: 'Nationwide Today',
+                            data: [data.death]
+                        }]
+                    }
+
+                    var ctx = document.getElementById('nationwide-canvas').getContext('2d')
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: chartData,
+                        options: {
+                            title: {
+                                display: true,
+                                text: 'Nationwide COVID19 Statistics'
+                            }
+                        }
+                    })
+                },
+                error: function(data) {
+                    console.log(data);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            showNationwideStats();
+        });
+
+        function dateToString(date) {
+            var mm = date.getMonth() + 1; // getMonth() is zero-based
+            var dd = date.getDate();
+
+            return [date.getFullYear(),
+                (mm>9 ? '' : '0') + mm,
+                (dd>9 ? '' : '0') + dd
+            ].join('');
+        }
+
+        function runSearch() {
+            var state = $('#state-select').val();
+            var date = new Date($('#date-select').val());
+            console.log(dateToString(date));
+
+            $.ajax({
+                url: `https://api.covidtracking.com/v1/states/${state}/${dateToString(date)}.json`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    console.log(data);
+
+                    var chartData = {
+                        labels: ['Deaths'],
+                        datasets: [{
+                            label: `${state} ${date.toDateString()}`,
+                            data: [data.death]
+                        }]
+                    }
+
+                    var ctx = document.getElementById('search-canvas').getContext('2d')
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: chartData,
+                        options: {
+                            title: {
+                                display: true,
+                                text: `${state} ${date.toDateString()}`
+                            }
+                        }
+                    })
+                },
+                error: function(data) {
+                    console.log(data);
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div>
+        <!-- Nationwide statistics -->
+        <!-- totalDeaths, totalCases -->
+        <canvas id="nationwide-canvas"></canvas>
+    </div>
+    <div>
+        <!-- search state/date -->
+        <!-- totalDeaths, totalCases, newCases -->
+        <select id="state-select">
+            <option value="ca">California</option>
+        </select>
+        <input type="date" id="date-select">
+        <button onclick="runSearch()">Search</button>
+
+        <canvas id="search-canvas"></canvas>
+    </div>
+</body>
+</html>
